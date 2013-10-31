@@ -1,6 +1,7 @@
 import datetime
 import math
 
+
 class Dataset:
     def __init__(self, txt_file=None):
         self.data_dict = {}
@@ -19,7 +20,6 @@ class Dataset:
             if not tmp[2] in self.data_dict:
                 self.data_dict[tmp[2]] = list()
             self.data_dict[tmp[2]].append([tmp[0], tmp[1], tmp[3]])
-        print self.data_dict
 
     def __file_len__(self, fname):
         with open(fname) as f:
@@ -30,11 +30,12 @@ class Dataset:
 
 class Record(object):
 
-    def __init__(self, dataset, date):
-        self.x = dataset.data_dict[date][0]
-        self.y = dataset.data_dict[date][1]
-        self.time = date
-        self.measurement = dataset.data_dict[date][3]
+    def __init__(self, dataset, x=None, y=None, t=None, ):
+        self.data = dataset.data_dict
+        self.__find_pm__('-75.180525','40.699207','10.9')
+
+    def __find_pm__(self, x, y, t):
+        print self.data
 
 
 class Formulas(object):
@@ -48,6 +49,7 @@ class Formulas(object):
 def main():
     d = Dataset()
     d.load("/Users/Brandon/PycharmProjects/gis_project/resources/pm25_2009_measured.txt")
+    r = Record(d)
 
 
 
