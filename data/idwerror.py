@@ -41,7 +41,7 @@ def rmse(i_vals=[], o_vals=[], n=1.0):
 
 def mare(i_vals=[], o_vals=[], n=1.0):
 	"""
-	Calculates Mean Absolute Relatvie Error
+	Calculates Mean Absolute Relative Error
 
 	Keyword arguments:
 	i_vals -- the list of interpolated values (default [])
