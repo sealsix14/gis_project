@@ -6,17 +6,55 @@ data and other required information.
 import sys
 from PyQt4 import QtGui
 from PyQt4 import uic
+from PyQt4 import QtCore
+from data.data import Dataset, DataMap, Record
 
 
-class Window(QtGui.QFrame):
-
-    height = 200
-    width = 200
+class Window(QtGui.QWidget):
 
     def __init__(self):
-        QtGui.QFrame.__init__(self)
-        self.frame = uic.loadUi("/Users/brandon/PycharmProjects/gis_project/resources/gis.ui")
-        self.frame.show()
+        super(Window, self).__init__()
+        self.map = None
+        self.data = None
+        self.initUI()
+
+    def initUI(self):
+
+        #self.setToolTip('This is a <b>QWidget</b> widget')
+    #Quit Button handler and positioning code below
+        quit_btn = QtGui.QPushButton('Quit', self)
+        quit_btn.clicked.connect(QtCore.QCoreApplication.instance().quit)
+        #quit_btn.setToolTip('This is a <b>QPushButton</b> widget')
+        quit_btn.resize(quit_btn.sizeHint())
+        quit_btn.move(450, 450)
+
+    #Load file button
+        load_btn = QtGui.QPushButton('Load File', self)
+        load_btn.resize(load_btn.sizeHint())
+        load_btn.move(20,450)
+        load_btn.clicked.connect(self.loadFile)
+
+        self.setGeometry(200,200,250,150)
+        #self.setWindowTitle('Tooltips')
+        self.setWindowTitle('GIS')
+        self.show()
+
+    def loadFile(self, sender):
+        gis_file = QtGui.QFileDialog()
+        fname = gis_file.getOpenFileName(self,'Open File', '.')
+        self.data = Dataset()
+        self.data.load(fname)
+        self.map = DataMap(self.data.data_list)
+
+    def IDW_Query(self, record, exp=1, n=1):
+        '''
+        We will set a record with the inputted data from the GUI.
+        We then calculate the neighbors and use this list of neighbors
+        in the IDW calculations.
+        '''
+        neighbors = self.map.get_n_neighbors(record, n)
+        #result = idw(r, neighbors, exp)
+
 
 
 
