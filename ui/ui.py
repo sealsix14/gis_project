@@ -16,6 +16,7 @@ class Window(QtGui.QWidget):
         super(Window, self).__init__()
         self.map = None
         self.data = None
+        self.record = None
         self.initUI()
 
     def initUI(self):
@@ -45,6 +46,19 @@ class Window(QtGui.QWidget):
         self.data = Dataset()
         self.data.load(fname)
         self.map = DataMap(self.data.data_list)
+
+    def showInputDialog(self):
+
+        text, ok = QtGui.QInputDialog.getText(self, 'Input Dialog',
+            'Enter your name:')
+
+        if ok:
+            vin = str(text)
+            x,y,t = vin.split(" ")
+            self.record = Record()
+            self.record.x = x
+            self.record.y = y
+            self.record.t = t
 
     def IDW_Query(self, record, exp=1, n=1):
         '''
