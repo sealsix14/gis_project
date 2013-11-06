@@ -10,8 +10,15 @@ class Dataset:
 
         if txt_file:
             self.file_length = self.__file_len__(txt_file)
-
+    
     def load(self, txt_file):
+        '''
+        Open the pm file, we then will enumerate through each record.
+        Each record contains an X and Y coordinate, a Day number and a
+        Value. We then append new values to the dictionary and each X,Y,Value
+        is associated with that day. If the day is already present, we just append 
+        the new X,Y,Value. 
+        '''
         f = open(txt_file, 'rb')
         if self.file_length == 0:
             self.file_length = self.__file_len__(txt_file)
@@ -19,7 +26,7 @@ class Dataset:
             tmp = [item.strip('\t') for item in l.split()]
             if not tmp[2] in self.data_dict:
                 self.data_dict[tmp[2]] = list()
-            self.data_dict[tmp[2]].append([tmp[0], tmp[1], tmp[3]])
+            self.data_dict[tmp[2]].append(Record(tmp[0], tmp[1], tmp[3]))
 
     def __file_len__(self, fname):
         with open(fname) as f:
@@ -30,25 +37,26 @@ class Dataset:
 
 class Record(object):
 
-    def __init__(self, dataset, x=None, y=None, t=None, ):
-        self.data = dataset.data_dict
-        self.__find_pm__('-75.180525','40.699207','10.9')
-
-    def __find_pm__(self, x, y, t):
-        print self.data
-
-
-class Formulas(object):
-
-    #TODO: IDW based spatial calculation in Review Paper 1.pdf section 4.2
-    def calculate_idw(self, x, y, t, xi, yi):
-        return math.sqrt(math.pow(xi-x, 2) + math.pow(yi-y, 2))
+    def __init__(self, x=None, y=None, m=None ):
+        self.x = x
+        self.y = y
+        self.m = m
+        
+    def __str__(self):
+        return "X: %f,\tY: %f,\tM: %f" % (x, y, m)
+        
+        
+class DataMap:
+    
+    def __init__(self, dataset):
+        pass 
 
 
 
 def main():
     d = Dataset()
-    d.load("/Users/Brandon/PycharmProjects/gis_project/resources/pm25_2009_measured.txt")
+    #d.load("/Users/Brandon/PycharmProjects/gis_project/resources/pm25_2009_measured.txt")
+    d.load("../resources/pm25_2009_measured.txt")
     r = Record(d)
 
 
