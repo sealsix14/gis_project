@@ -7,3 +7,5 @@ def loocv(i_vals=[], o_vals=[], n=1.0):
     for I, O in zip(i_vals, o_vals):
         error = math.abs(I-O)/O
         e_vals.append(error)
+
+
