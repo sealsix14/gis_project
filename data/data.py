@@ -68,11 +68,29 @@ class Record(object):
 
     @staticmethod
     def interpolate_value(x, y, t, records_map, N=3, P=1):
-        output = Record(x, y, t, 0, records_map)
+        output = Record(x, y, t, 0.0, records_map)
         neighbors = output.get_neighbors(N)
         sum = 0
         for neighbor in neighbors:
             sum += output.get_lambda(neighbors, neighbor, P) * neighbor.m
+        return sum
+
+    #TODO: get this to output to the file correctly
+    @staticmethod
+    def generateloocv(map, output_file):
+        #Generate loocv values for each input line and write to a new file
+        output_vals = []
+        for record in map.records:
+            output_vals.append([])
+            output_vals[record].append(record.x, record.y, record.t, record.m)
+            for n in xrange(3,5):
+                for p in xrange(1,3):
+                    #Calculate loocv
+                    result = record.loocv(n,p)
+                    output_vals[record].append(result)
+
+
+
 
     def get_lambda(self, neighbors, selected_record, power,):
         di = self.get_distance_to(selected_record)
@@ -92,6 +110,7 @@ class Record(object):
         sum = 0
         for i in xrange(N):
             sum += self.get_lambda(neighbors,neighbors[i],P) * neighbors[i].m
+        return sum
 
     def __str__(self):
         return "X: %f,\tY: %f,\tT: %f,\tM: %f" % (float(self.x), float(self.y), float(self.t), float(self.m))
@@ -110,6 +129,7 @@ class DataMap:
         for i in range(len(self.data)):
             if self.data[i][0] == x and self.data[i][1] == y and self.data[i][2] == t:
                 return self.records[i]
+        return Record(x,y,t,0.0,self)
 
     def get_n_neighbors(self, record, n):
         neighbors = []
@@ -129,11 +149,14 @@ def main():
     #r = Record(d)
     map = DataMap(d)
     result = map.get_record(-87.650556, 34.760556, 28.0)
+    rec = Record(84.456,43.6543,1.0,0.0,map)
+    r = Record.interpolate_value(rec.x,rec.y,rec.t,rec.d_map)
+    print r
     result.d_map = map
     ng = result.get_neighbors(3)
-    print result
-    for n in ng:
-        print n
+    #print result
+    #for n in ng:
+     #   print n
 
 
 
