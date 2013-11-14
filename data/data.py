@@ -52,24 +52,19 @@ class Dataset:
 
 class Record(object):
 
-    def __init__(self, x, y, t, m, d_map=None):
+    def __init__(self, x, y, t, m):
         self.x = x
         self.y = y
         self.t = t
         self.m = m
-        self.d_map = d_map
-
-    def get_neighbors(self, N):
-        neighbors = self.d_map.get_n_neighbors(self, N)
-        return neighbors
 
     def get_distance_to(self, record):
         return math.sqrt((self.x - record.x) * (self.x - record.x) + (self.y - record.y) * (self.y - record.y) + (self.t - record.t) * (self.t - record.t))
 
     @staticmethod
-    def interpolate_value(x, y, t, records_map, N=3, P=1):
-        output = Record(x, y, t, 0.0, records_map)
-        neighbors = output.get_neighbors(N)
+    def interpolate_value(x, y, t, m,d_map, N=3, P=1):
+        output = Record(x, y, t, m)
+        neighbors = d_map.get_n_neighbors(output, N)
         sum = 0
         for neighbor in neighbors:
             sum += output.get_lambda(neighbors, neighbor, P) * neighbor.m
@@ -77,24 +72,31 @@ class Record(object):
 
     #TODO: get this to output to the file correctly
     @staticmethod
-    def generateloocv(map, output_file):
+    def generateloocv(d_map):
         #Generate loocv values for each input line and write to a new file
         output_vals = []
-        for record in map.records:
+        for i, record in enumerate(d_map.records):
             output_vals.append([])
-            output_vals[record].append(record.x, record.y, record.t, record.m)
+            output_vals[i].append(record.m)
             for n in xrange(3,5):
                 for p in xrange(1,3):
                     #Calculate loocv
-                    result = record.loocv(n,p)
-                    output_vals[record].append(result)
+                    result = record.loocv(n,p,d_map)
+                    output_vals[i].append(result)
 
+        tmp = ""
+        for val in output_vals:
+            tmp += "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n" % (val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7], val[8],)
+        with open("../output/loocv_idw.txt", "wt") as f:
+            f.write(tmp)
 
+    @staticmethod
+    def generateError(i_vals, o_vals):
+        pass
 
-
-    def get_lambda(self, neighbors, selected_record, power,):
+    def get_lambda(self, neighbors, selected_record, power):
         di = self.get_distance_to(selected_record)
-        numerator = math.pow(1/di,power)
+        numerator = math.pow(1/di, power)
         denominator = 0
         for neighbor in neighbors:
             dk = self.get_distance_to(neighbor)
@@ -104,12 +106,12 @@ class Record(object):
         return numerator / denominator
 
     #Pass in the map data in order to
-    def loocv(self, N, P):
+    def loocv(self, N, P, d_map):
         #Get neighbors
-        neighbors = self.get_neighbors(N,)
+        neighbors = d_map.get_n_neighbors(self, N)
         sum = 0
         for i in xrange(N):
-            sum += self.get_lambda(neighbors,neighbors[i],P) * neighbors[i].m
+            sum += self.get_lambda(neighbors, neighbors[i], P) * neighbors[i].m
         return sum
 
     def __str__(self):
@@ -123,23 +125,27 @@ class DataMap:
         self.tree = scipy.spatial.KDTree(dataset.data_list)
         self.data = dataset.data_list
         self.records = dataset.record_list
+        self.o_vals = []
+        for record in self.records:
+            self.o_vals.append(record.m)
+
         #point = [-87.650556, 34.760556, 37.0]
 
     def get_record(self, x, y, t):
         for i in range(len(self.data)):
             if self.data[i][0] == x and self.data[i][1] == y and self.data[i][2] == t:
                 return self.records[i]
-        return Record(x,y,t,0.0,self)
+        return Record(x, y, t, 0.0, self)
 
     def get_n_neighbors(self, record, n):
         neighbors = []
         point = [record.x, record.y, record.t]
-        distances, positions = self.tree.query([point], n)
-        for x in xrange(n):
+        distances, positions = self.tree.query([point], n+1)
+        for x in xrange(n+1):
             p = positions.flat[x]
             neighbors.append(self.records[p])
 
-        return neighbors
+        return neighbors[1:]
 
 
 def main():
@@ -147,13 +153,19 @@ def main():
     #d.load("/Users/Brandon/PycharmProjects/gis_project/resources/pm25_2009_measured.txt")
     d.load("../resources/pm25_2009_measured.txt")
     #r = Record(d)
-    map = DataMap(d)
-    result = map.get_record(-87.650556, 34.760556, 28.0)
-    rec = Record(84.456,43.6543,1.0,0.0,map)
-    r = Record.interpolate_value(rec.x,rec.y,rec.t,rec.d_map)
-    print r
+    d_map = DataMap(d)
+    result = d_map.get_record(-87.650556, 34.760556, 28.0)
+    r1 = d_map.get_record(-87.650556, 34.760556, 28.0)
+    dist = result.get_distance_to(r1)
+    print "dist: %f: " % dist
+    rec = Record(84.456,43.6543,1.0,0.0)
+    dist1 = result.get_distance_to(rec)
+    print "dist1: %f" % dist1
+    stuff = r1.loocv(3,2,d_map)
+    print stuff
+    #r = Record.interpolate_value(rec.x,rec.y,rec.t,rec.m,d_map)
     result.d_map = map
-    ng = result.get_neighbors(3)
+    #ng = result.get_neighbors(3)
     #print result
     #for n in ng:
      #   print n

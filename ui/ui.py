@@ -14,7 +14,7 @@ class Window(QtGui.QWidget):
 
     def __init__(self):
         super(Window, self).__init__()
-        self.map = None
+        self.d_map = None
         self.data = None
         self.record = None
         self.i_vals = []
@@ -33,6 +33,13 @@ class Window(QtGui.QWidget):
         self.idw_label = QtGui.QLabel(self)
         self.idw_label.move(70,200)
         self.idw_label.setText("")
+
+    #Generate LOOCV Button
+        loocv_btn = QtGui.QPushButton('Generate Loocv File', self)
+        loocv_btn.clicked.connect(self.generateLoocv)
+        loocv_btn.resize(loocv_btn.sizeHint())
+        loocv_btn.move(10,300)
+
     #Quit Button handler and positioning code below
         quit_btn = QtGui.QPushButton('Quit', self)
         quit_btn.clicked.connect(QtCore.QCoreApplication.instance().quit)
@@ -99,8 +106,9 @@ class Window(QtGui.QWidget):
         fname = gis_file.getOpenFileName(self,'Open File', '.')
         self.data = Dataset()
         self.data.load(fname)
-        self.map = DataMap(self.data)
+        self.d_map = DataMap(self.data)
         self.file_label.setText("File Loaded!")
+        self.o_vals = self.d_map.o_vals
 
     def showInputDialog(self):
 
@@ -109,7 +117,7 @@ class Window(QtGui.QWidget):
         if ok:
             vin = str(text)
             x,y,t = vin.split(" ")
-            self.record = Record(x,y,t,self.map)
+            self.record = Record(x,y,t,self.d_map)
             self.IDW_Query(self.record)
 
     def interpolate(self):
@@ -122,11 +130,14 @@ class Window(QtGui.QWidget):
         y = float(self.query_y.text())
         t = float(self.query_t.text())
         exp = float(self.query_p.text())
-        record = Record(x, y, t, 0.0, self.map)
+        record = Record(x, y, t, 0.0)
         print record
-        i_val = Record.interpolate_value(record.x, record.y, record.t, record.d_map, n, exp)
+        i_val = Record.interpolate_value(record.x, record.y, record.t, self.d_map, n, exp)
         print i_val
         self.i_label.setText("Interpolated Value: %f" % i_val)
+
+    def generateLoocv(self):
+        Record.generateloocv(self.d_map)
 
     def IDW_Query(self, record, exp=1, n=1):
         '''
@@ -134,8 +145,7 @@ class Window(QtGui.QWidget):
         We then calculate the neighbors and use this list of neighbors
         in the IDW calculations.
         '''
-        neighbors = record.get_neighbors(n)
-        result = Record.interpolate_value(record.x, record.y, record.t, self.map, n, exp)
+        result = Record.interpolate_value(record.x, record.y, record.t, self.d_map, n, exp)
         self.query_field.setText(str(result))
 
     def calculate_idw(self):
@@ -150,9 +160,9 @@ class Window(QtGui.QWidget):
             p = exp
         else:
             p = 1
-        for record in self.map.records:
-            i_val = Record.interpolate_value(record.x,record.y,record.t,self.map,neighbors,p)
-            self.ivals[record] = i_val
+        for i, record in enumerate(self.d_map.records):
+            i_val = Record.interpolate_value(record.x, record.y, record.t, record.m, self.d_map, neighbors, p)
+            self.i_vals[i] = i_val
         self.idw_label.setText("IDW Calculated!")
 
 
