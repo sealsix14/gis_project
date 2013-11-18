@@ -2,7 +2,7 @@ import datetime
 import math
 import scipy.spatial
 from kdtree import KDTree
-
+import thread
 
 class Dataset:
 
@@ -70,7 +70,7 @@ class Record(object):
             sum += output.get_lambda(neighbors, neighbor, P) * neighbor.m
         return sum
 
-    #TODO: get this to output to the file correctly
+
     @staticmethod
     def generateloocv(d_map):
         #Generate loocv values for each input line and write to a new file
@@ -78,21 +78,49 @@ class Record(object):
         for i, record in enumerate(d_map.records):
             output_vals.append([])
             output_vals[i].append(record.m)
-            for n in xrange(3,5):
-                for p in xrange(1,3):
-                    #Calculate loocv
-                    result = record.loocv(n,p,d_map)
-                    output_vals[i].append(result)
+            #Calculate loocv for n-3,4,5 and p-1,2,3
+            r31 = record.loocv(3, 1, d_map)
+            r32 = record.loocv(3,2, d_map)
+            r33 = record.loocv(3, 3, d_map)
+            r41 = record.loocv(4, 1, d_map)
+            r42 = record.loocv(4, 2, d_map)
+            r43 = record.loocv(4, 3, d_map)
+            r51 = record.loocv(5, 1, d_map)
+            r52 = record.loocv(5, 2, d_map)
+            r53 = record.loocv(5, 3, d_map)
+            output_vals[i].append(r31)
+            output_vals[i].append(r32)
+            output_vals[i].append(r33)
+            output_vals[i].append(r41)
+            output_vals[i].append(r42)
+            output_vals[i].append(r43)
+            output_vals[i].append(r51)
+            output_vals[i].append(r52)
+            output_vals[i].append(r53)
+        print output_vals[1]
 
         tmp = ""
         for val in output_vals:
-            tmp += "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n" % (val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7], val[8],)
+            tmp += "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n" % (val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7], val[8], val[9])
         with open("../output/loocv_idw.txt", "wt") as f:
             f.write(tmp)
 
     @staticmethod
-    def generateError(i_vals, o_vals):
-        pass
+    def generateError(loocv_file):
+        error_vals=[]
+        #Read Values from loocv file to do the error calculations
+        file_vals={}
+        f = open(loocv_file, 'rb')
+        for i, l in enumerate(f):
+            tmp = [item.strip('\t') for item in l.split()]
+            file_vals[i] = tmp
+
+
+        tmp = ""
+        for val in error_vals:
+            tmp += "%f\t%f\t%f\t%f\t%f\n" % (val[0], val[1], val[2], val[3], val[4])
+        with open("../output/error_idw.txt", "wt") as f:
+            f.write(tmp)
 
     def get_lambda(self, neighbors, selected_record, power):
         di = self.get_distance_to(selected_record)
@@ -154,21 +182,14 @@ def main():
     d.load("../resources/pm25_2009_measured.txt")
     #r = Record(d)
     d_map = DataMap(d)
-    result = d_map.get_record(-87.650556, 34.760556, 28.0)
-    r1 = d_map.get_record(-87.650556, 34.760556, 28.0)
-    dist = result.get_distance_to(r1)
-    print "dist: %f: " % dist
-    rec = Record(84.456,43.6543,1.0,0.0)
-    dist1 = result.get_distance_to(rec)
-    print "dist1: %f" % dist1
-    stuff = r1.loocv(3,2,d_map)
-    print stuff
-    #r = Record.interpolate_value(rec.x,rec.y,rec.t,rec.m,d_map)
-    result.d_map = map
-    #ng = result.get_neighbors(3)
-    #print result
-    #for n in ng:
-     #   print n
+    record = d_map.get_record(-87.650556, 34.760556, 28.0)
+    print "M Value"
+    print record.m
+    print "LOOCV"
+    print record.loocv(3,2,d_map)
+    print record.loocv(3,3,d_map)
+    print record.loocv(4,1,d_map)
+    Record.generateloocv(d_map)
 
 
 

@@ -31,7 +31,7 @@ class Window(QtGui.QWidget):
         IDW_btn.resize(IDW_btn.sizeHint())
         IDW_btn.move(10,200)
         self.idw_label = QtGui.QLabel(self)
-        self.idw_label.move(70,200)
+        self.idw_label.move(170,200)
         self.idw_label.setText("")
 
     #Generate LOOCV Button
@@ -39,6 +39,9 @@ class Window(QtGui.QWidget):
         loocv_btn.clicked.connect(self.generateLoocv)
         loocv_btn.resize(loocv_btn.sizeHint())
         loocv_btn.move(10,300)
+        self.loocv_txt = QtGui.QLabel(self)
+        self.loocv_txt.setText("")
+        self.loocv_txt.move(25,300)
 
     #Quit Button handler and positioning code below
         quit_btn = QtGui.QPushButton('Quit', self)
@@ -100,7 +103,7 @@ class Window(QtGui.QWidget):
         #Show the window finally
         self.setWindowTitle('GIS')
         self.show()
-
+#Task 1: Import
     def loadFile(self, sender):
         gis_file = QtGui.QFileDialog()
         fname = gis_file.getOpenFileName(self,'Open File', '.')
@@ -119,7 +122,7 @@ class Window(QtGui.QWidget):
             x,y,t = vin.split(" ")
             self.record = Record(x,y,t,self.d_map)
             self.IDW_Query(self.record)
-
+#Task 4: Interpolate the given value.
     def interpolate(self):
         nb, ok = QtGui.QInputDialog.getText(self, 'Input Dialog', 'How Many Neighbors do you want to use?:')
         if ok:
@@ -131,13 +134,17 @@ class Window(QtGui.QWidget):
         t = float(self.query_t.text())
         exp = float(self.query_p.text())
         record = Record(x, y, t, 0.0)
-        print record
         i_val = Record.interpolate_value(record.x, record.y, record.t, self.d_map, n, exp)
-        print i_val
         self.i_label.setText("Interpolated Value: %f" % i_val)
 
+#Task 5: Generate Loocv file for powers 1,2,3 and Neighbors 3,4,5. (measurement,p1n1,p1n2,p1n3,...)
     def generateLoocv(self):
         Record.generateloocv(self.d_map)
+        self.loocv_txt.setText("Loocv File Generated")
+
+#Task 5: Generate the Error Estimations for all 9 Interpolations based on the original values (original, I1, I2, I3, I4,...I8)
+    def generateError(self):
+        Record.generateError(self.i_vals, self.o_vals)
 
     def IDW_Query(self, record, exp=1, n=1):
         '''
@@ -148,21 +155,22 @@ class Window(QtGui.QWidget):
         result = Record.interpolate_value(record.x, record.y, record.t, self.d_map, n, exp)
         self.query_field.setText(str(result))
 
+#Task 3: Interpolate using IDW for all o_vals and set an i_vals array to the data created.
     def calculate_idw(self):
         # Calculate IDW and output to an array to store the i_vals, then can use it in the error measurements
         n,ok = QtGui.QInputDialog.getText(self, 'Input Neighbors', 'How Many Neighbors?:')
         if ok:
-            neighbors = n
+            neighbors = int(n)
         else:
             neighbors = 3
         exp,ok = QtGui.QInputDialog.getText(self, 'Input Exp', 'What Exponent?:')
         if ok:
-            p = exp
+            p = int(exp)
         else:
             p = 1
-        for i, record in enumerate(self.d_map.records):
+        for record in self.d_map.records:
             i_val = Record.interpolate_value(record.x, record.y, record.t, record.m, self.d_map, neighbors, p)
-            self.i_vals[i] = i_val
+            self.i_vals.append(i_val)
         self.idw_label.setText("IDW Calculated!")
 
 
