@@ -155,7 +155,7 @@ class Window(QtGui.QWidget):
 #Task 5: Generate the Error Estimations for all 9 Interpolations based on the original values (original, I1, I2, I3, I4,...I8)
     def generateError(self):
         Record.generateError(Record.parseLoocv("../output/loocv_idw"))
-        self.error_label.setText("Error Summary Generated to /output/error_idw.txt")
+        self.error_label.setText("Error Summary Generated to /output/error_statistics_idw.txt")
 
     def IDW_Query(self, record, exp=1, n=1):
         '''

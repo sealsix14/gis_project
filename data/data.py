@@ -126,7 +126,7 @@ class Record(object):
         for val in xrange(1, len(error_vals)):
             #print error_vals[val]
             tmp += "%f\t%f\t%f\t%f\n" % (error_vals[val][0], error_vals[val][1], error_vals[val][2], error_vals[val][3])
-        with open("../output/error_idw.txt", "wt") as f:
+        with open("../output/error_statistics_idw.txt", "wt") as f:
             f.write(tmp)
 
     @staticmethod
