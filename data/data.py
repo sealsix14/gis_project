@@ -3,6 +3,7 @@ import math
 import scipy.spatial
 from kdtree import KDTree
 import thread
+from idwerror import mae, mse, mare, rmse
 
 class Dataset:
 
@@ -62,7 +63,7 @@ class Record(object):
         return math.sqrt((self.x - record.x) * (self.x - record.x) + (self.y - record.y) * (self.y - record.y) + (self.t - record.t) * (self.t - record.t))
 
     @staticmethod
-    def interpolate_value(x, y, t, m,d_map, N=3, P=1):
+    def interpolate_value(x, y, t, m, d_map, N=3, P=1):
         output = Record(x, y, t, m)
         neighbors = d_map.get_n_neighbors(output, N)
         sum = 0
@@ -106,21 +107,49 @@ class Record(object):
             f.write(tmp)
 
     @staticmethod
-    def generateError(loocv_file):
+    def generateError(loocv_list):
         error_vals=[]
+        error_vals.append([])
         #Read Values from loocv file to do the error calculations
-        file_vals={}
+        for i in xrange(1, 10):
+            print i
+            error_vals.append([])
+            mae_out = mae(loocv_list[0],loocv_list[i])
+            mse_out = mse(loocv_list[0], loocv_list[i])
+            rmse_out = rmse(loocv_list[0], loocv_list[i])
+            mare_out = mare(loocv_list[0], loocv_list[i])
+            error_vals[i].append(mae_out)
+            error_vals[i].append(mse_out)
+            error_vals[i].append(rmse_out)
+            error_vals[i].append(mare_out)
+        tmp = ""
+        for val in xrange(1, len(error_vals)):
+            #print error_vals[val]
+            tmp += "%f\t%f\t%f\t%f\n" % (error_vals[val][0], error_vals[val][1], error_vals[val][2], error_vals[val][3])
+        with open("../output/error_idw.txt", "wt") as f:
+            f.write(tmp)
+
+    @staticmethod
+    def parseLoocv(loocv_file):
+        results=[]
+        for i in xrange(10):
+            results.append([])
+        #parse the file into a 2d list. list[0] is the original value, list[1] is n3p1 and so on. where list[0][0] is the first rows original value
         f = open(loocv_file, 'rb')
         for i, l in enumerate(f):
             tmp = [item.strip('\t') for item in l.split()]
-            file_vals[i] = tmp
+            results[0].append(float(tmp[0]))
+            results[1].append(float(tmp[1]))
+            results[2].append(float(tmp[2]))
+            results[3].append(float(tmp[3]))
+            results[4].append(float(tmp[4]))
+            results[5].append(float(tmp[5]))
+            results[6].append(float(tmp[6]))
+            results[7].append(float(tmp[7]))
+            results[8].append(float(tmp[8]))
+            results[9].append(float(tmp[9]))
 
-
-        tmp = ""
-        for val in error_vals:
-            tmp += "%f\t%f\t%f\t%f\t%f\n" % (val[0], val[1], val[2], val[3], val[4])
-        with open("../output/error_idw.txt", "wt") as f:
-            f.write(tmp)
+        return results
 
     def get_lambda(self, neighbors, selected_record, power):
         di = self.get_distance_to(selected_record)
@@ -163,7 +192,7 @@ class DataMap:
         for i in range(len(self.data)):
             if self.data[i][0] == x and self.data[i][1] == y and self.data[i][2] == t:
                 return self.records[i]
-        return Record(x, y, t, 0.0, self)
+        return Record(x, y, t, 0.0)
 
     def get_n_neighbors(self, record, n):
         neighbors = []
@@ -183,14 +212,9 @@ def main():
     #r = Record(d)
     d_map = DataMap(d)
     record = d_map.get_record(-87.650556, 34.760556, 28.0)
-    print "M Value"
-    print record.m
-    print "LOOCV"
-    print record.loocv(3,2,d_map)
-    print record.loocv(3,3,d_map)
-    print record.loocv(4,1,d_map)
-    Record.generateloocv(d_map)
 
+    #Record.generateloocv(d_map)
+    Record.generateError(Record.parseLoocv("../output/loocv_idw.txt"))
 
 
 
